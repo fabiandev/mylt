@@ -1,0 +1,16 @@
+{
+  "name": "mylt",
+  "version": "0.0.1",
+  "description": "A wrapper for custom localtunnel servers.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Fabian Pirklbauer",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^2.1.4",
+    "node-persist": "^2.0.7",
+    "yargs": "^6.5.0"
+  }
+}
