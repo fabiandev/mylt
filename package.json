@@ -3,6 +3,9 @@
   "version": "0.1.1",
   "description": "A lt client helper for custom localtunnel servers.",
   "main": "index.js",
+  "bin": {
+    "mylt": "index.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/fabiandev/mylt.git"
