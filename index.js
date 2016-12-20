@@ -15,8 +15,9 @@ storage.initSync({
 
 const argv = yargs
   .usage('Usage: $0 <options>')
-  .option('run', {
-    describe: 'Runs localtunnel. Requires lc to be installed.'
+  .option('r', {
+    alias: 'run',
+    describe: 'Runs localtunnel. Requires lt to be installed.'
   })
   .option('list', {
     describe: 'Shows the current configuration.'
