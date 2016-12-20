@@ -1,6 +1,6 @@
 # mylt
 
-A simple wrapper to make it easier to use localtunnel with custom servers.
+A simple lt client helper to make it easier to use localtunnel with custom servers.
 
 ## Quick Start
 
