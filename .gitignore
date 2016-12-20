@@ -2,3 +2,4 @@ node_modules
 /.storage
 .editorconfig
 .DS_Store
+npm-debug.log

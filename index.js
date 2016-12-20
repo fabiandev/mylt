@@ -86,8 +86,7 @@ async.parallel([
       }
 
       console.log('Executing localtunnel...');
-      // command = command.join(' ');
-      console.log(command);
+
       const child = spawn(`lt`, command);
       child.stdout.setEncoding('utf8')
 
