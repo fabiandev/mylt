@@ -1,12 +1,13 @@
 {
   "name": "mylt",
   "version": "0.1.0",
-  "description": "A wrapper for custom localtunnel servers.",
+  "description": "A lt client helper for custom localtunnel servers.",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fabiandev/mylt.git"
   },
-  "author": "Fabian Pirklbauer",
+  "author": "Fabian Pirklbauer <hi@fabiandev.io>",
   "license": "MIT",
   "dependencies": {
     "async": "^2.1.4",
