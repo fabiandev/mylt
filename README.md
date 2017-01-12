@@ -6,7 +6,8 @@ A simple lt client helper to make it easier to use localtunnel with custom serve
 
 ```sh
 $ npm install -g mylt
-$ mylt --allow-self-signed --default-host https://tunnel.example.tld:1234
-$ mylt --list
-$ mylt --run --port 8080
+$ mylt set port 5000
+$ mylt set host https://tunnel.example.tld:1234
+$ mylt list
+$ mylt run
 ```
