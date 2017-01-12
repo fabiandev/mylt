@@ -1,6 +1,6 @@
 {
   "name": "mylt",
-  "version": "0.1.4",
+  "version": "1.0.0",
   "description": "A lt client helper for custom localtunnel servers.",
   "main": "index.js",
   "bin": {
