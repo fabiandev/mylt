@@ -4,182 +4,159 @@
 
 const async = require('async');
 const spawn = require('child_process').spawn;
+const path = require('path');
 const storage = require('node-persist');
 const yargs = require('yargs');
 
 const NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
 
+const LT_OPTIONS = [
+  'h', 'host',
+  's', 'subdomain',
+  'l', 'local-host',
+  'o', 'open',
+  'p', 'port'
+];
+
+function close(code) {
+  console.log('Closing tunnel connection.');
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = NODE_TLS_REJECT_UNAUTHORIZED;
+  if (code) process.exit(code)
+  process.exit()
+}
+
 storage.initSync({
-  dir: '.storage'
+  dir: path.join(__dirname, '.storage')
 });
 
 const argv = yargs
-  .usage('Usage: $0 <options>')
-  .option('r', {
-    alias: 'run',
-    describe: 'Runs localtunnel. Requires lt to be installed.'
+  .usage('Usage: $0 <command> [options]')
+  .command({
+    command: 'run',
+    desc: 'Run localtunnel (lt) with defaults, or provide lt options.',
+    handler: argv => run(argv)
   })
-  .option('list', {
-    describe: 'Shows the current configuration.'
+  .command({
+    command: 'list',
+    desc: 'List saved default values.',
+    handler: argv => list(argv)
   })
-  .option('allow-self-signed', {
-    describe: 'Allow self signed certificates by the server.'
+  .command({
+    command: 'set <key> [value]',
+    desc: 'Set a default value for localtunnel.',
+    builder: yargs => yargs.default('value', 'true'),
+    handler: argv => set(argv)
   })
-  .option('default-host', {
-    describe: 'Save the default host.'
+  .command({
+    command: 'unset <key>',
+    desc: 'Remove a default value.',
+    handler: argv => unset(argv)
+  })
+  .command({
+    command: 'trust',
+    desc: 'Trust self signed certificates by default. (Same as: mylt set trust)',
+    handler: argv => trust(argv)
   })
   .help('help', 'Show this help')
   .version(require('./package').version)
   .argv;
 
-async.parallel([
-    cb => {
-      if (!argv.run) {
-        cb(null);
-        return;
-      }
+if (argv._.length === 0) {
+  yargs.showHelp();
+  close();
+}
 
-      if (!argv.p && !argv.port) {
-        console.log('Missing required argument: port');
-        cb(true);
-        return;
-      }
+if ([
+    'run', 'list', 'set',
+    'unset', 'trust', 'help'
+  ].indexOf(argv._[0]) === -1) {
+  yargs.showHelp();
+  close();
+}
 
-      let cert = storage.getItemSync('cert');
-      let defaultHost = storage.getItemSync('host');
+function run(argv) {
+  const command = [];
 
-      let host = argv.h || argv.host || defaultHost || undefined;
-      let port = argv.p || argv.port || undefined;
-      let subdomain = argv.s || argv.subdomain || undefined;
-      let localhost = argv.l || argv.localhost || undefined;
-      let open = argv.o || argv.open || undefined;
+  storage.forEach((key, value) => {
+    command.push(key.length > 1 ? `--${key}` : `-${key}`);
+    command.push(value);
+  });
 
-      let command = [];
+  LT_OPTIONS.forEach((key, value) => {
+    if (!argv.hasOwnProperty(key)) return;
+    let match = false;
+    let option = key.length > 1 ? `--${key}` : `-${key}`;
 
-      if (cert) {
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-      }
+    command.forEach((k, v) => {
+      if (option !== k) return;
+      command[k] = argv[key];
+      match = true;
+    });
 
-      if (host) {
-        command.push('-h');
-        command.push(host)
-      }
-
-      if (port) {
-        command.push('-p');
-        command.push(port);
-      }
-
-      if (subdomain) {
-        command.push('-s');
-        command.push(subdomain);
-      }
-
-      if (localhost) {
-        command.push('-l');
-        command.push(localhost)
-      }
-
-      if (open) {
-        command.push('-o');
-        command.push(open);
-      }
-
-      console.log('Executing localtunnel...');
-
-      const child = spawn(`lt`, command);
-      child.stdout.setEncoding('utf8')
-
-      child.stdout.on('data', data => {
-        console.log(data);
-      });
-      child.stderr.on('data', data => {
-        console.log('Error: ' + data);
-      });
-      child.on('close', code => {
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED = NODE_TLS_REJECT_UNAUTHORIZED;
-        process.exit(code)
-      });
-    },
-    cb => {
-      if (!argv['default-host']) {
-        cb(null);
-        return;
-      }
-
-      console.log(`Setting default host to: ${argv['default-host']}`)
-      storage.setItem('host', argv['default-host'])
-        .then(() => {
-          console.log('Done setting default host.')
-          cb(null, argv['default-host']);
-        })
-        .catch(() => {
-          console.log('Error setting host.');
-          cb(true)
-        });
-    },
-    cb => {
-      if (!argv['allow-self-signed']) {
-        cb(null);
-        return;
-      }
-
-      console.log(`Setting option for allowing self signed certificates to: ${argv['allow-self-signed']}`)
-      storage.setItem('cert', argv['allow-self-signed'])
-        .then(() => {
-          console.log('Done setting certificate option.')
-          cb(null, argv['allow-self-signed']);
-        })
-        .catch((err) => {
-          console.log('Error setting certificate option.');
-          cb(true);
-        });
-    },
-    cb => {
-      if (!argv.list) {
-        cb(null)
-        return;
-      }
-
-      console.log(`Getting current options...`);
-
-      let host = storage.getItemSync('host');
-      let cert = storage.getItemSync('cert');
-
-      console.log(`Default host: ${host}`);
-      console.log(`Allow self-signed certificates: ${cert}`);
-
-      cb(null, {
-        host,
-        cert
-      })
+    if (!match) {
+      command.push(option);
+      command.push(argv[key]);
     }
-  ],
-  (err, results) => {
-    if (typeof results === Array && results.contains('running')) {
-      return;
-    }
+  });
 
-    if (err) {
-      process.exit(1);
-    }
-
-    if (!results.filter((value) => {
-        return value !== undefined;
-      }).length) {
-      yargs.showHelp();
-    }
-
-    process.exit(0);
+  if (command.indexOf('--trust') !== -1) {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
   }
-);
+
+  console.log('Executing:', 'lt', command.join(' '));
+
+  const child = spawn(`lt`, command);
+
+  child.stdout.setEncoding('utf8')
+
+  child.stdout.on('data', data => {
+    console.log(data);
+  });
+
+  child.stderr.on('data', data => {
+    console.log('Error: ' + data);
+  });
+
+  child.on('close', code => {
+    close(code);
+  });
+}
+
+function list() {
+  storage.forEach((key, value) => {
+    console.log(`${key}: ${value}`);
+  });
+
+  close();
+}
+
+function trust() {
+  set({
+    key: 'trust',
+    value: 'true'
+  });
+}
+
+function set(argv) {
+  console.log(`Setting "${argv.key}" to "${argv.value}"`)
+  storage.setItem(argv.key, argv.value).then(close);
+}
+
+function unset(argv) {
+  console.log(`Removing "${argv.key}"`)
+  storage.removeItem(argv.key).then(close);
+}
+
+function close(code) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = NODE_TLS_REJECT_UNAUTHORIZED;
+  if (code) process.exit(code)
+  process.exit()
+}
 
 process.on('SIGINT', () => {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = NODE_TLS_REJECT_UNAUTHORIZED;
-  process.exit();
+  close();
 });
 
 process.on('SIGTERM', () => {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = NODE_TLS_REJECT_UNAUTHORIZED;
-  process.exit();
+  close();
 });
