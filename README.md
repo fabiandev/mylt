@@ -12,6 +12,6 @@ $ mylt list
 $ mylt run --open
 ```
 
-You can set any option via `mylt set`, to pass it on as default value when running `mylt run`.
-To override defaults, just specify them, e.g. `mylt --port 8080`. This will use port `8080`
+You can set any option via `mylt set <key> [value]`, to pass it on as default value when running `mylt run`.
+To override defaults, just specify them, e.g. `mylt run --port 8080`. This will use port `8080`
 even if `5000` is set as default.
