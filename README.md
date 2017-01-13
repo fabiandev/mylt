@@ -1,6 +1,6 @@
 # mylt
 
-A simple [localtunnel](https://github.com/localtunnel/localtunnel) client helper to make it easier to use for a custom [localtunnel server](https://github.com/localtunnel/server).
+A simple [localtunnel](https://github.com/localtunnel/localtunnel) client helper to make it easier to use with a custom [localtunnel server](https://github.com/localtunnel/server).
 
 ## Quick Start
 
